@@ -1,0 +1,9 @@
+{
+  "assistant": {
+    "enabled": true,
+    "trigger": "header",
+    "voiceInputEnabled": true,
+    "ttsEnabled": true
+  },
+  "assistant_roles": ["leadership", "manager", "department_head"]
+}

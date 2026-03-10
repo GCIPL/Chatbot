@@ -1,0 +1,14 @@
+{
+  "comment": "Extend this as you add more APIs and Description_____ values. Backend uses it to map question → which rows to use.",
+  "timeHints": [
+    { "hints": ["today", "aaja", "aj"], "descriptionContains": "Today" },
+    { "hints": ["this month", "current month", "mahina", "month"], "descriptionContains": "Current_Mth" },
+    { "hints": ["this year", "FY", "fiscal", "year"], "descriptionContains": "Current_FY" }
+  ],
+  "productHints": [
+    { "hints": ["OPC"], "descriptionContains": "OPC" },
+    { "hints": ["PPC"], "descriptionContains": "PPC" },
+    { "hints": ["NP", "domestic", "Nepal"], "descriptionContains": "(NP)" },
+    { "hints": ["export", "Exp"], "descriptionContains": "(Exp)" }
+  ]
+}

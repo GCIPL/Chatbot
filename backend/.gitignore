@@ -1,0 +1,7 @@
+# Do not commit .env — it contains secrets
+.env
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/

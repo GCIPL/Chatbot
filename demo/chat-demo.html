@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ghorahi Assistant</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #e8eef2;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1rem;
+    }
+    .chat-panel {
+      width: 100%;
+      max-width: 480px;
+      height: 85vh;
+      max-height: 720px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-header {
+      padding: 1rem 1.25rem;
+      background: #2c3e50;
+      color: #fff;
+      font-weight: 600;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .chat-header span { opacity: 0.9; font-size: 0.85rem; font-weight: 400; }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .msg {
+      max-width: 88%;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: #2c3e50;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg.assistant {
+      align-self: flex-start;
+      background: #f0f4f8;
+      color: #1a1a1a;
+      border: 1px solid #e2e8f0;
+      border-bottom-left-radius: 4px;
+    }
+    .msg .sources {
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+    .msg.loading { color: #64748b; }
+    .chat-input-area {
+      padding: 1rem;
+      background: #fff;
+      border-top: 1px solid #e2e8f0;
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-end;
+    }
+    .chat-input-row textarea {
+      flex: 1;
+      min-height: 44px;
+      max-height: 120px;
+      padding: 0.65rem 1rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font: inherit;
+      font-size: 0.95rem;
+      resize: none;
+    }
+    .chat-input-row textarea:focus {
+      outline: none;
+      border-color: #2c3e50;
+      box-shadow: 0 0 0 2px rgba(44,62,80,0.15);
+    }
+    .chat-input-row button {
+      padding: 0.65rem 1.1rem;
+      background: #2c3e50;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .chat-input-row button:hover { background: #1a252f; }
+    .chat-input-row button:disabled { background: #94a3b8; cursor: not-allowed; }
+    .btn-voice {
+      padding: 0.65rem;
+      background: #475569;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-voice:hover { background: #334155; }
+    .btn-voice.listening { background: #dc2626; }
+    .btn-voice svg { width: 20px; height: 20px; }
+    .msg-wrap { display: flex; align-items: flex-start; gap: 0.5rem; max-width: 88%; }
+    .msg-wrap .msg { flex: 1; }
+    .btn-listen {
+      flex-shrink: 0;
+      padding: 0.4rem;
+      background: transparent;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      color: #475569;
+      cursor: pointer;
+      margin-top: 0.25rem;
+    }
+    .btn-listen:hover { background: #f1f5f9; color: #2c3e50; }
+    .btn-listen.playing { background: #e0f2fe; border-color: #0ea5e9; color: #0284c7; }
+    .btn-listen svg { width: 16px; height: 16px; display: block; }
+    .config-row {
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .config-row label { font-size: 0.8rem; color: #64748b; }
+    .config-row input { flex: 1; padding: 0.4rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; }
+    .examples {
+      padding: 0 1rem 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .examples span { font-size: 0.8rem; color: #64748b; align-self: center; margin-right: 0.25rem; }
+    .examples button {
+      padding: 0.35rem 0.65rem;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: #334155;
+      cursor: pointer;
+    }
+    .examples button:hover { background: #e2e8f0; }
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 2rem;
+    }
+    .empty-state p { margin-top: 0.5rem; }
+    .error-msg { font-size: 0.85rem; color: #dc2626; padding: 0 1rem 0.5rem; }
+  </style>
+</head>
+<body>
+  <div class="chat-panel">
+    <div class="chat-header">
+      Ghorahi Assistant
+      <span>— Sales & dispatch</span>
+    </div>
+
+    <div class="chat-messages" id="messages">
+      <div class="empty-state" id="emptyState">
+        Ask about today’s sales, dispatch, or summary.
+        <p>e.g. “Today sales kati cha?” or “Give me today summary”</p>
+      </div>
+    </div>
+
+    <div class="examples">
+      <span>Try:</span>
+      <button type="button" data-msg="Today sales kati cha?">Today sales kati cha?</button>
+      <button type="button" data-msg="Give me today summary">Give me today summary</button>
+      <button type="button" data-msg="This month OPC">This month OPC</button>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="chat-input-row">
+        <textarea id="input" rows="1" placeholder="Type or tap mic to ask…" autocomplete="off"></textarea>
+        <button type="button" id="mic" class="btn-voice" title="Ask by voice">🎤</button>
+        <button type="button" id="send">Send</button>
+      </div>
+      <div class="config-row">
+        <label for="apiBase">API:</label>
+        <input type="url" id="apiBase" value="http://localhost:8000" placeholder="http://localhost:8000">
+      </div>
+    </div>
+  </div>
+  <div class="error-msg" id="error"></div>
+
+  <script>
+    const messagesEl = document.getElementById('messages');
+    const emptyState = document.getElementById('emptyState');
+    const inputEl = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+    const apiBaseEl = document.getElementById('apiBase');
+    const errorEl = document.getElementById('error');
+
+    function getBase() {
+      let base = (apiBaseEl.value || '').trim();
+      if (!base) base = 'http://localhost:8000';
+      return base.replace(/\/$/, '');
+    }
+
+    function addMessage(role, text, sources, replyForTts) {
+      emptyState.style.display = 'none';
+      const wrap = document.createElement('div');
+      wrap.className = role === 'assistant' ? 'msg-wrap' : '';
+      wrap.style.alignSelf = role === 'user' ? 'flex-end' : 'flex-start';
+
+      const div = document.createElement('div');
+      div.className = 'msg ' + role;
+      const content = document.createElement('div');
+      content.textContent = text;
+      div.appendChild(content);
+      if (sources && sources.length) {
+        const src = document.createElement('div');
+        src.className = 'sources';
+        src.textContent = 'Sources: ' + sources.join(', ');
+        div.appendChild(src);
+      }
+
+      if (role === 'assistant' && (replyForTts || text)) {
+        const listenBtn = document.createElement('button');
+        listenBtn.type = 'button';
+        listenBtn.className = 'btn-listen';
+        listenBtn.title = 'Listen to answer';
+        listenBtn.innerHTML = '<svg fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+        listenBtn.addEventListener('click', function () { speak(replyForTts || text, listenBtn); });
+        div.appendChild(listenBtn);
+      }
+
+      wrap.appendChild(div);
+      messagesEl.appendChild(wrap);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    var currentUtterance = null;
+    var preferredVoice = null;
+
+    function getFemaleVoice() {
+      var voices = window.speechSynthesis.getVoices();
+      var lang = (v) => (v.lang || '').toLowerCase();
+      var name = (v) => (v.name || '').toLowerCase();
+      // Prefer Indian female: en-IN, hi-IN, or name contains India/Veena/Lekha
+      var indianFemale = voices.filter(function (v) {
+        var l = lang(v);
+        var n = name(v);
+        var isIndian = l === 'en-in' || l === 'hi-in' || l.indexOf('-in') !== -1 || n.indexOf('india') !== -1 || n.indexOf('veena') !== -1 || n.indexOf('lekha') !== -1 || n.indexOf('hi-in') !== -1;
+        var isFemale = n.indexOf('female') !== -1 || n.indexOf('woman') !== -1 || n.indexOf('veena') !== -1 || n.indexOf('lekha') !== -1 || n.indexOf('samantha') !== -1;
+        return isIndian && (isFemale || l.indexOf('in') !== -1);
+      })[0];
+      if (indianFemale) return indianFemale;
+      // Any Indian voice (male or female)
+      var indian = voices.filter(function (v) { return lang(v) === 'en-in' || lang(v) === 'hi-in' || name(v).indexOf('india') !== -1; })[0];
+      if (indian) return indian;
+      // Fallback: any female
+      var female = voices.filter(function (v) {
+        var n = name(v);
+        return n.indexOf('female') !== -1 || n.indexOf('veena') !== -1 || n.indexOf('lekha') !== -1;
+      })[0];
+      return female || voices[0];
+    }
+
+    function speak(text, btn) {
+      if (!window.speechSynthesis) { errorEl.textContent = 'Text-to-speech not supported in this browser.'; return; }
+      window.speechSynthesis.cancel();
+      document.querySelectorAll('.btn-listen.playing').forEach(function (b) { b.classList.remove('playing'); });
+      if (btn) btn.classList.add('playing');
+      if (!preferredVoice) preferredVoice = getFemaleVoice();
+      currentUtterance = new SpeechSynthesisUtterance(text);
+      if (preferredVoice) currentUtterance.voice = preferredVoice;
+      currentUtterance.rate = 0.9;
+      currentUtterance.pitch = 1.1;
+      currentUtterance.onend = currentUtterance.onerror = function () {
+        if (btn) btn.classList.remove('playing');
+        currentUtterance = null;
+      };
+      window.speechSynthesis.speak(currentUtterance);
+    }
+
+    if (window.speechSynthesis) {
+      window.speechSynthesis.onvoiceschanged = function () { preferredVoice = getFemaleVoice(); };
+      if (window.speechSynthesis.getVoices().length) preferredVoice = getFemaleVoice();
+    }
+
+    function addLoading() {
+      emptyState.style.display = 'none';
+      const div = document.createElement('div');
+      div.className = 'msg assistant loading';
+      div.id = 'loadingMsg';
+      div.textContent = '…';
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function removeLoading() {
+      const el = document.getElementById('loadingMsg');
+      if (el) el.remove();
+    }
+
+    async function send() {
+      const msg = (inputEl.value || '').trim();
+      if (!msg) return;
+      errorEl.textContent = '';
+      inputEl.value = '';
+      addMessage('user', msg);
+      addLoading();
+      sendBtn.disabled = true;
+
+      try {
+        const res = await fetch(getBase() + '/api/assistant/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msg })
+        });
+        const data = await res.json().catch(() => ({}));
+        removeLoading();
+
+        if (!res.ok) {
+          addMessage('assistant', data.detail || data.message || 'Request failed.');
+          if (data.detail) errorEl.textContent = String(data.detail).slice(0, 200);
+          return;
+        }
+
+        addMessage('assistant', data.reply || '(No reply)', data.sources, data.reply_for_tts);
+      } catch (e) {
+        removeLoading();
+        addMessage('assistant', 'Could not reach the API. Is the backend running at ' + getBase() + '?');
+        errorEl.textContent = e.message || 'Network error';
+      } finally {
+        sendBtn.disabled = false;
+        inputEl.focus();
+      }
+    }
+
+    sendBtn.addEventListener('click', send);
+    inputEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+    });
+
+    var recognition = null;
+    var micBtn = document.getElementById('mic');
+    function initSpeech() {
+      var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) { micBtn.style.display = 'none'; return; }
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+      recognition.onresult = function (e) {
+        var t = (e.results[0] && e.results[0][0]) ? e.results[0][0].transcript : '';
+        if (t) { inputEl.value = t; send(); }
+        micBtn.classList.remove('listening');
+        micBtn.disabled = false;
+      };
+      recognition.onerror = function () { micBtn.classList.remove('listening'); micBtn.disabled = false; };
+      recognition.onend = function () { micBtn.classList.remove('listening'); micBtn.disabled = false; };
+    }
+    micBtn.addEventListener('click', function () {
+      if (!recognition) initSpeech();
+      if (!recognition) return;
+      if (micBtn.classList.contains('listening')) {
+        recognition.stop();
+        return;
+      }
+      micBtn.classList.add('listening');
+      micBtn.disabled = true;
+      inputEl.value = '';
+      recognition.start();
+    });
+    initSpeech();
+
+    document.querySelectorAll('.examples button[data-msg]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        inputEl.value = this.getAttribute('data-msg');
+        inputEl.focus();
+      });
+    });
+
+    inputEl.focus();
+  </script>
+</body>
+</html>
