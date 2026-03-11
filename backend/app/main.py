@@ -1,10 +1,15 @@
 """FastAPI app: Ghorahi Cement Assistant backend."""
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from app.api.assistant import router as assistant_router
+
+# UI is served from static/ (filled in Docker build from demo/chat.html)
+STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
 
 @asynccontextmanager
@@ -36,3 +41,21 @@ app.include_router(assistant_router)
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/")
+async def root():
+    """Serve the chat UI so the same Cloud Run URL has both UI and API."""
+    index = STATIC_DIR / "index.html"
+    if not index.exists():
+        return {"message": "Ghorahi Assistant API", "ui": "Not bundled. Use /api/assistant/chat."}
+    return FileResponse(index, media_type="text/html")
+
+
+@app.get("/chat.html")
+async def chat_page():
+    """Serve the chat UI (same as /)."""
+    index = STATIC_DIR / "index.html"
+    if not index.exists():
+        return {"message": "UI not bundled."}
+    return FileResponse(index, media_type="text/html")

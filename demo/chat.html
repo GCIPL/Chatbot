@@ -9,44 +9,188 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Ghorahi Assistant</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #e8eef2;
+      /* Very light sea blue close to white */
+      background: #f3f8fc;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 1rem;
+      justify-content: center;
+      padding: 1.5rem 1rem;
+    }
+    .chat-shell {
+      width: 100%;
+      max-width: 960px;
+    }
+    .login-panel {
+      width: 100%;
+      max-width: 420px;
+      margin: 0 auto 1rem auto;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      padding: 1.75rem 1.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+    }
+    .login-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .login-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #f97316;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .login-logo img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .login-title {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+    .login-title-main {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #111827;
+    }
+    .login-title-sub {
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .login-form label {
+      font-size: 0.82rem;
+      color: #4b5563;
+    }
+    .login-form input {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+    }
+    .login-form input:focus {
+      outline: none;
+      border-color: #f58220;
+      box-shadow: 0 0 0 2px rgba(245,130,32,0.15);
+    }
+    .login-form button {
+      margin-top: 0.5rem;
+      padding: 0.6rem 1rem;
+      border-radius: 10px;
+      border: none;
+      background: #f58220;
+      color: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .login-form button:hover {
+      background: #d96d15;
+    }
+    .login-error {
+      font-size: 0.8rem;
+      color: #dc2626;
+      min-height: 1em;
     }
     .chat-panel {
       width: 100%;
-      max-width: 480px;
+      max-width: 920px;
       height: 85vh;
       max-height: 720px;
-      background: #fff;
+      background: #ffffff;
       border-radius: 12px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-      display: flex;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      display: none;
       flex-direction: column;
       overflow: hidden;
     }
+    body.logged-in .login-panel {
+      display: none;
+    }
+    body.logged-in .chat-panel {
+      display: flex;
+    }
     .chat-header {
-      padding: 1rem 1.25rem;
-      background: #2c3e50;
-      color: #fff;
+      padding: 0.8rem 1.25rem;
+      /* Ghorahi orange brand tone */
+      background: #f58220;
+      color: #ffffff;
       font-weight: 600;
       font-size: 1rem;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      justify-content: space-between;
+      gap: 0.75rem;
     }
-    .chat-header span { opacity: 0.9; font-size: 0.85rem; font-weight: 400; }
-    .chat-messages {
+    .chat-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .chat-logo {
+      width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .chat-logo img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .chat-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+    .chat-title-main {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .chat-title-sub {
+      font-size: 0.78rem;
+      opacity: 0.9;
+    }
+    .chat-header span {
+      opacity: 0.95;
+      font-size: 0.82rem;
+      font-weight: 400;
+    }
+    .chat-main {
       flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+    .chat-messages {
+      flex: 2;
       overflow-y: auto;
       padding: 1rem;
       display: flex;
@@ -64,15 +208,15 @@
     }
     .msg.user {
       align-self: flex-end;
-      background: #2c3e50;
-      color: #fff;
+      background: #f58220;
+      color: #ffffff;
       border-bottom-right-radius: 4px;
     }
     .msg.assistant {
       align-self: flex-start;
-      background: #f0f4f8;
+      background: #fff7f0;
       color: #1a1a1a;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #ffe0c2;
       border-bottom-left-radius: 4px;
     }
     .msg .sources {
@@ -83,8 +227,8 @@
     .msg.loading { color: #64748b; }
     .chat-input-area {
       padding: 1rem;
-      background: #fff;
-      border-top: 1px solid #e2e8f0;
+      background: #ffffff;
+      border-top: 1px solid #f1f5f9;
     }
     .chat-input-row {
       display: flex;
@@ -96,7 +240,7 @@
       min-height: 44px;
       max-height: 120px;
       padding: 0.65rem 1rem;
-      border: 1px solid #cbd5e1;
+      border: 1px solid #e2e8f0;
       border-radius: 10px;
       font: inherit;
       font-size: 0.95rem;
@@ -104,13 +248,13 @@
     }
     .chat-input-row textarea:focus {
       outline: none;
-      border-color: #2c3e50;
-      box-shadow: 0 0 0 2px rgba(44,62,80,0.15);
+      border-color: #f58220;
+      box-shadow: 0 0 0 2px rgba(245,130,32,0.2);
     }
     .chat-input-row button {
       padding: 0.65rem 1.1rem;
-      background: #2c3e50;
-      color: #fff;
+      background: #f58220;
+      color: #ffffff;
       border: none;
       border-radius: 10px;
       font: inherit;
@@ -118,11 +262,11 @@
       cursor: pointer;
       flex-shrink: 0;
     }
-    .chat-input-row button:hover { background: #1a252f; }
-    .chat-input-row button:disabled { background: #94a3b8; cursor: not-allowed; }
+    .chat-input-row button:hover { background: #d96d15; }
+    .chat-input-row button:disabled { background: #fbbf8b; cursor: not-allowed; }
     .btn-voice {
       padding: 0.65rem;
-      background: #475569;
+      background: #374151;
       color: #fff;
       border: none;
       border-radius: 10px;
@@ -132,7 +276,7 @@
       align-items: center;
       justify-content: center;
     }
-    .btn-voice:hover { background: #334155; }
+    .btn-voice:hover { background: #1f2933; }
     .btn-voice.listening { background: #dc2626; }
     .msg-wrap { display: flex; align-items: flex-start; gap: 0.5rem; max-width: 88%; }
     .msg-wrap .msg { flex: 1; }
@@ -140,7 +284,7 @@
       flex-shrink: 0;
       padding: 0.4rem;
       background: transparent;
-      border: 1px solid #cbd5e1;
+      border: 1px solid #e2e8f0;
       border-radius: 8px;
       color: #475569;
       cursor: pointer;
@@ -158,22 +302,37 @@
     .config-row label { font-size: 0.8rem; color: #64748b; }
     .config-row input { flex: 1; padding: 0.4rem 0.6rem; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem; }
     .examples {
-      padding: 0 1rem 0.75rem;
+      padding: 1rem;
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
+      flex-direction: column;
+      gap: 0.5rem;
+      border-left: 1px solid #f1f5f9;
+      background: #fffdf9;
+      min-width: 220px;
+      max-width: 280px;
     }
-    .examples span { font-size: 0.8rem; color: #64748b; align-self: center; margin-right: 0.25rem; }
+    .examples-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #f58220;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .examples-desc {
+      font-size: 0.8rem;
+      color: #64748b;
+    }
     .examples button {
-      padding: 0.35rem 0.65rem;
-      background: #f1f5f9;
-      border: 1px solid #e2e8f0;
+      padding: 0.4rem 0.65rem;
+      background: #fff7f0;
+      border: 1px solid #ffe0c2;
       border-radius: 8px;
       font-size: 0.8rem;
       color: #334155;
       cursor: pointer;
+      text-align: left;
     }
-    .examples button:hover { background: #e2e8f0; }
+    .examples button:hover { background: #ffe0c2; }
     .empty-state {
       flex: 1;
       display: flex;
@@ -187,30 +346,204 @@
     }
     .empty-state p { margin-top: 0.5rem; }
     .error-msg { font-size: 0.85rem; color: #dc2626; padding: 0 1rem 0.5rem; }
+
+    /* Mobile-friendly: tablet and below */
+    @media (max-width: 768px) {
+      body {
+        padding: 0.75rem 0.5rem;
+        padding-left: max(0.5rem, env(safe-area-inset-left));
+        padding-right: max(0.5rem, env(safe-area-inset-right));
+        padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+      .chat-shell { max-width: 100%; }
+      .login-panel {
+        max-width: 100%;
+        padding: 1.25rem 1rem;
+        margin-bottom: 0.75rem;
+      }
+      .chat-panel {
+        max-width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        max-height: none;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      body.logged-in .chat-panel {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+      }
+      .chat-header {
+        padding: 0.6rem 1rem;
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+      }
+      .chat-logo { width: 40px; height: 40px; }
+      .chat-title-main { font-size: 0.9rem; }
+      .chat-main {
+        flex-direction: column;
+        min-height: 0;
+      }
+      .chat-messages {
+        flex: 1;
+        min-height: 0;
+        padding: 0.75rem 1rem;
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+      }
+      .msg {
+        max-width: 92%;
+        padding: 0.65rem 0.9rem;
+        font-size: 0.95rem;
+      }
+      .msg-wrap { max-width: 92%; }
+      .examples {
+        flex: none;
+        min-width: 0;
+        max-width: none;
+        border-left: none;
+        border-top: 1px solid #f1f5f9;
+        padding: 0.6rem 0.85rem;
+        max-height: 170px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 0.45rem;
+      }
+      .examples-title {
+        grid-column: 1 / -1;
+        font-size: 0.75rem;
+      }
+      .examples-desc { display: none; }
+      .examples button {
+        min-height: 44px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+      }
+      .chat-input-area {
+        padding: 0.75rem 1rem;
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+        padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+      }
+      .chat-input-row {
+        gap: 0.5rem;
+      }
+      .chat-input-row textarea {
+        min-height: 44px;
+        font-size: 16px; /* prevents iOS zoom on focus */
+      }
+      .chat-input-row button,
+      .btn-voice {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 0.65rem 1rem;
+      }
+      .config-row {
+        margin-top: 0.5rem;
+      }
+      .config-row label { font-size: 0.75rem; }
+      .config-row input { font-size: 16px; min-height: 36px; }
+      .empty-state { padding: 1.5rem 1rem; font-size: 0.85rem; }
+      .error-msg { padding: 0 1rem 0.5rem; }
+    }
+
+    /* Phone: tighter layout */
+    @media (max-width: 480px) {
+      body { padding: 0.5rem 0.25rem; }
+      .login-panel { padding: 1rem 0.75rem; }
+      .login-logo { width: 44px; height: 44px; }
+      .login-title-main { font-size: 0.95rem; }
+      .login-form button { min-height: 44px; }
+      .chat-header { padding: 0.5rem 0.75rem; }
+      .chat-logo { width: 36px; height: 36px; }
+      .chat-title-main { font-size: 0.85rem; }
+      .examples {
+        max-height: 140px;
+        grid-template-columns: 1fr;
+      }
+      .msg { max-width: 95%; }
+      .msg-wrap { max-width: 95%; }
+    }
   </style>
 </head>
 <body>
-  <div class="chat-panel">
-    <div class="chat-header">
-      Ghorahi Assistant
-      <span>— Sales & dispatch</span>
-    </div>
-
-    <div class="chat-messages" id="messages">
-      <div class="empty-state" id="emptyState">
-        Ask about today’s sales, dispatch, or summary.
-        <p>e.g. “Today sales kati cha?” or “Give me today summary”</p>
+  <div class="chat-shell">
+    <div class="login-panel" id="loginPanel">
+      <div class="login-header">
+        <div class="login-logo">
+          <img src="https://ghorahicement.com.np/favicon.ico" alt="Ghorahi Cement">
+        </div>
+        <div class="login-title">
+          <div class="login-title-main">Ghorahi Cement</div>
+          <div class="login-title-sub">AI Assistant Login</div>
+        </div>
       </div>
+      <form id="loginForm" class="login-form">
+        <div>
+          <label for="loginUser">Username</label>
+          <input type="text" id="loginUser" autocomplete="off" required>
+        </div>
+        <div>
+          <label for="loginPass">Password</label>
+          <input type="password" id="loginPass" autocomplete="off" required>
+        </div>
+        <div class="login-error" id="loginError"></div>
+        <button type="submit">Sign in</button>
+      </form>
     </div>
+    <div class="chat-panel" id="chatPanel">
+      <div class="chat-header">
+      <div class="chat-header-left">
+        <div class="chat-logo">
+          <!-- Replace src with actual hosted logo if available -->
+          <img src="https://ghorahicement.com.np/favicon.ico" alt="Ghorahi Cement">
+        </div>
+        <div class="chat-title-block">
+          <div class="chat-title-main">Ghorahi Cement Assistant</div>
+        </div>
+      </div>
+      </div>
 
-    <div class="examples">
-      <span>Try:</span>
-      <button type="button" data-msg="Today sales kati cha?">Today sales kati cha?</button>
-      <button type="button" data-msg="Give me today summary">Give me today summary</button>
-      <button type="button" data-msg="This month OPC">This month OPC</button>
-    </div>
+      <div class="chat-main">
+      <div class="chat-messages" id="messages">
+        <div class="empty-state" id="emptyState">
+          Ask about today’s sales, production, stock, attendance, or summary.
+          <p>e.g. “Today sales kati cha?” or “Aaja clinker production line-2 kati ho?”</p>
+        </div>
+      </div>
 
-    <div class="chat-input-area">
+      <div class="examples">
+        <div class="examples-title">Sample questions</div>
+        <div class="examples-desc">Tap to auto-fill the assistant with realistic questions.</div>
+        <!-- Sales examples -->
+        <button type="button" data-msg="Today sales kati cha?">Today sales</button>
+        <button type="button" data-msg="This month total sales kati cha?">Monthly sales</button>
+        <button type="button" data-msg="This year total sales kati cha?">Yearly sales</button>
+
+        <!-- Production examples -->
+        <button type="button" data-msg="Aaja production kati cha?">Today production</button>
+        <button type="button" data-msg="Yo mahina production kati cha?">Monthly production</button>
+        <button type="button" data-msg="Yo barsa production kati cha?">Yearly production</button>
+
+        <!-- Stock / raw material received examples -->
+        <button type="button" data-msg="Aaja raw material kati receive bhayo?">Today raw material received</button>
+        <button type="button" data-msg="Yo mahina raw material kati receive bhayo?">Monthly raw material received</button>
+        <button type="button" data-msg="Yo barsa raw material kati receive bhayo?">Yearly raw material received</button>
+        <button type="button" data-msg="Clinker stock, Empty bag stock ra Coal stock kati cha?">Raw material stock (clinker, empty bag, coal etc.)</button>
+        <!-- Attendance example -->
+        <button type="button" data-msg="Aaja attendance kati cha?">Today attendance</button>
+
+        <!-- Capabilities -->
+        <button type="button" data-msg="What information can you provide?">What information can you provide?</button>
+      </div>
+      </div>
+
+      <div class="chat-input-area">
       <div class="chat-input-row">
         <textarea id="input" rows="1" placeholder="Type or tap mic to ask…" autocomplete="off"></textarea>
         <button type="button" id="mic" class="btn-voice" title="Ask by voice">🎤</button>
@@ -220,7 +553,7 @@
         <label for="apiBase">API:</label>
         <input type="url" id="apiBase" placeholder="Backend URL (same as page if served via ngrok)">
       </div>
-    </div>
+      </div>
   </div>
   <div class="error-msg" id="error"></div>
 
@@ -233,7 +566,8 @@
     const errorEl = document.getElementById('error');
 
     function defaultApiBase() {
-      return 'https://notal-periwinkled-nola.ngrok-free.dev';
+      if (window.location.origin) return window.location.origin;
+      return 'https://ghorahi-assistant-599117333117.asia-south1.run.app';
     }
     apiBaseEl.value = defaultApiBase();
     apiBaseEl.placeholder = 'API URL (ngrok or your server)';
@@ -413,9 +747,32 @@
     document.querySelectorAll('.examples button[data-msg]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         inputEl.value = this.getAttribute('data-msg');
-        inputEl.focus();
+        send();
       });
     });
+
+    // Simple login with fixed demo credentials.
+    const loginForm = document.getElementById('loginForm');
+    const loginUser = document.getElementById('loginUser');
+    const loginPass = document.getElementById('loginPass');
+    const loginError = document.getElementById('loginError');
+
+    loginForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const user = (loginUser.value || '').trim();
+      const pass = (loginPass.value || '').trim();
+      const validUser = user.toLowerCase() === 'gci';
+      const validPass = pass.toLowerCase() === 'gci';
+      if (validUser && validPass) {
+        loginError.textContent = '';
+        document.body.classList.add('logged-in');
+        inputEl.focus();
+      } else {
+        loginError.textContent = 'Invalid credentials.';
+      }
+    });
+
+    loginUser.focus();
 
     inputEl.focus();
   </script>
