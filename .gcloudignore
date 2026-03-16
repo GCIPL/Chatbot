@@ -1,0 +1,17 @@
+# Do not upload these to Cloud Build (smaller/faster context)
+.git
+.gitignore
+.gcloudignore
+**/.env
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.DS_Store
+**/node_modules
+*.md
+!backend/README.md
+docs/
+.github/
+*.jsonl
+.cursor

@@ -1,5 +1,29 @@
 # Ghorahi Assistant – Cloud Run testing
 
+## Deploy with Cloud Build (Docker + Cloud Run)
+
+From the **repo root** (with Docker running and `gcloud` logged in):
+
+```bash
+# 1. Set your GCP project
+gcloud config set project YOUR_GCP_PROJECT_ID
+
+# 2. Enable required APIs (if not already)
+gcloud services enable cloudbuild.googleapis.com run.googleapis.com containerregistry.googleapis.com
+
+# 3. Submit build and deploy (Cloud Build builds the Docker image, then deploys to Cloud Run)
+gcloud builds submit --config=cloudbuild.yaml .
+```
+
+- Build uses the repo’s **Dockerfile** (Python 3.11, FastAPI, bundled `demo/chat.html`).
+- **cloudbuild.yaml** builds the image, pushes to `gcr.io/<PROJECT>/ghorahi-assistant`, and deploys to Cloud Run in `asia-south1` with unauthenticated access.
+- Optional overrides:  
+  `gcloud builds submit --config=cloudbuild.yaml . --substitutions=_SERVICE_NAME=my-assistant,_REGION=us-central1`
+
+After deploy, the **Live URL** below is your service URL (project number may differ).
+
+---
+
 ## Live URL (UI + API)
 
 **https://ghorahi-assistant-599117333117.asia-south1.run.app/**

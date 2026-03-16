@@ -28,40 +28,58 @@ def _parse_body(body: str | bytes) -> list[dict[str, Any]]:
 
 def _normalize_rows(raw: list[dict[str, Any]]) -> list[NormalizedRow]:
     """
-    Map API rows to description + quantity + type (if present). No value.
+    Map API rows to description + quantity + metric_type.
 
-    The emp-portal API uses keys like 'Description_____','Description_______',
-    or even 'Description_____________' and similar for type/value. We strip
-    underscores and match by base name so small schema changes don't break us.
+    API returns columns: Description, Type, Quantity.
+    - Description: e.g. "Today SO (NP) PPC", "Today Sales Dispatch(NP) OPC", "Stock Qnty", etc.
+    - Type: e.g. "SO Qnty in MT", "Sales Dispatch Qnty in MT", "Stock Qnty", "Received Qnty in (Nos.)", "Production Qnty MT", "Attendance".
+    - Quantity: the numeric quantity only (MT, Nos., Ltr., Kg., etc.). Do not use any "Value" or amount column — quantity only.
+    Also accepts legacy keys (Item/Description, Status/Metric Type) or alternate casing. We never read "Value" — only "Quantity".
     """
     out: list[NormalizedRow] = []
 
     for row in raw:
-        desc_key = None
-        type_key = None
-        qty_key = None
+        desc = None
+        metric_type_raw = None
+        qty = None
 
-        for k in row.keys():
-            base = k.strip("_").lower()
-            if base == "description":
-                desc_key = k
-            elif base in ("type", "______type_____".strip("_").lower()):
-                type_key = k
+        for k, v in row.items():
+            base = k.strip("_").lower().replace(" ", "").replace("/", "")
+            if v is None or v == "":
+                continue
+            # Description column: "Description", "Item/Description", "Item"
+            if base in ("description", "itemdescription", "item"):
+                desc = (v or "").strip() if isinstance(v, str) else str(v).strip()
+            # Metric type column: "type", "Status/Metric Type", "Status", "Metric Type"
+            elif base in ("type", "statusmetrictype", "status", "metrictype"):
+                metric_type_raw = (v or "").strip() if isinstance(v, str) else str(v).strip()
+            # Quantity column only (do not use "Value" or amount)
             elif base == "quantity":
-                qty_key = k
+                qty = v
 
-        desc = (row.get(desc_key) or row.get("description") or "").strip() if desc_key else (row.get("description") or "").strip()
-        qty = row.get(qty_key) if qty_key else row.get("Quantity") or row.get("quantity")
-        metric_type_raw = row.get(type_key) if type_key else row.get("type")
-        metric_type = (metric_type_raw or "").strip() or None
+        if desc is None:
+            desc = (row.get("description") or row.get("Description") or "").strip()
+        if metric_type_raw is None:
+            metric_type_raw = (row.get("type") or row.get("Type") or "").strip()
+        if qty is None:
+            qty = row.get("Quantity") or row.get("quantity")
 
         if qty is None:
             continue
         try:
-            out.append(NormalizedRow(description=desc, quantity=float(qty), metric_type=metric_type))
+            qty_float = float(qty)
         except (TypeError, ValueError):
             continue
-
+        metric_type = metric_type_raw or None
+        if metric_type is not None and not metric_type:
+            metric_type = None
+        out.append(
+            NormalizedRow(
+                description=desc or "",
+                quantity=qty_float,
+                metric_type=metric_type,
+            )
+        )
     return out
 
 

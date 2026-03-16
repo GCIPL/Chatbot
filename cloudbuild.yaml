@@ -1,0 +1,52 @@
+# Cloud Build: build image and deploy to Cloud Run
+# Run from repo root: gcloud builds submit --config=cloudbuild.yaml .
+#
+# Optional overrides (defaults shown):
+#   gcloud builds submit --config=cloudbuild.yaml . \
+#     --substitutions=_SERVICE_NAME=ghorahi-assistant,_REGION=asia-south1
+
+substitutions:
+  _SERVICE_NAME: ghorahi-assistant
+  _REGION: asia-south1
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    id: build
+    args:
+      - build
+      - -t
+      - gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${BUILD_ID}
+      - -t
+      - gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:latest
+      - .
+    waitFor: ["-"]
+
+  - name: gcr.io/cloud-builders/docker
+    id: push
+    args:
+      - push
+      - gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${BUILD_ID}
+    waitFor: ["build"]
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    id: deploy
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE_NAME}
+      - --image
+      - gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${BUILD_ID}
+      - --region
+      - ${_REGION}
+      - --platform
+      - managed
+      - --allow-unauthenticated
+    waitFor: ["push"]
+
+images:
+  - gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:${BUILD_ID}
+  - gcr.io/${PROJECT_ID}/${_SERVICE_NAME}:latest

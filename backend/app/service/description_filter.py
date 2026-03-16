@@ -31,6 +31,25 @@ def _match_time(question: str, registry: dict[str, Any]) -> str | None:
     return None
 
 
+def _infer_time_contains(question: str) -> str | None:
+    """
+    Fallback when registry is missing or has no timeHints: infer from question
+    so "Today sales?" only sums Today rows, not Current_FY/Current_Mth.
+    """
+    q = _question_lower(question)
+    if any(h in q for h in ("today", "aaja", "aj")):
+        return "Today"
+    if any(h in q for h in ("this month", "current month", "mahina", "month")):
+        return "Current_Mth"
+    if any(h in q for h in ("this year", "current fy", "fiscal", "year", "barsa")):
+        return "Current_FY"
+    if any(h in q for h in ("previous month", "previous_mth", "last month")):
+        return "Previous_Mth"
+    if any(h in q for h in ("yesterday")):
+        return "Yesterday"
+    return None
+
+
 def _match_product(question: str, registry: dict[str, Any]) -> str | None:
     """Return descriptionContains for product, or None for all."""
     q = _question_lower(question)
@@ -52,22 +71,29 @@ def filter_rows_by_question(
     Also contains a special fallback for production questions where the user
     asks for "today" but only "Yesterday ..." production rows exist.
     """
-    if registry_path is None:
-        base_filtered = rows
-    else:
+    # Time filter: use registry if available, else infer from question (so "Today" doesn't sum FY/Mth)
+    time_contains = None
+    product_contains = None
+    if registry_path is not None:
         registry = _load_registry(registry_path)
         time_contains = _match_time(question, registry)
         product_contains = _match_product(question, registry)
+    if time_contains is None:
+        time_contains = _infer_time_contains(question)
 
-        def matches(row: NormalizedRow) -> bool:
-            d = row.description
-            if time_contains and time_contains not in d:
+    def matches(row: NormalizedRow) -> bool:
+        d = row.description
+        d_lower = d.lower().strip()
+        # Time: API uses "Today ...", "Current_Mth ...", "Current_FY ..." at start of description. Require startswith so we never mix periods.
+        if time_contains:
+            tc = time_contains.lower()
+            if not d_lower.startswith(tc):
                 return False
-            if product_contains and product_contains not in d:
-                return False
-            return True
+        if product_contains and product_contains.lower() not in d_lower:
+            return False
+        return True
 
-        base_filtered = [r for r in rows if matches(r)]
+    base_filtered = [r for r in rows if matches(r)]
 
     # If we have matches, return them.
     if base_filtered:
