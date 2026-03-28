@@ -23,6 +23,18 @@ class ChatErrorResponse(BaseModel):
     message: str
 
 
+class QuickLinkItem(BaseModel):
+    name: str
+    url: str
+
+
+class QuickLinksResponse(BaseModel):
+    """Portal shortcuts from Sales Force returnData (ChatBothLink / ABC=109)."""
+
+    links: list[QuickLinkItem] = Field(default_factory=list)
+    error: str | None = None
+
+
 # --- Intent / entities (graph state) ---
 
 

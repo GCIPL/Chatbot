@@ -2,7 +2,38 @@
 
 Used by the frontend chat drawer to send messages and receive replies. All requests require existing website authentication (session cookie or Bearer token as per current site).
 
-## Endpoint
+## Endpoints
+
+```
+POST /api/assistant/chat
+GET  /api/assistant/quick-links
+GET  /api/assistant/portal-link-meta
+```
+
+### GET `/api/assistant/portal-link-meta`
+
+Returns JSON used by the chat UI to **group** navigation rows into sections (Sales, Dashboards, etc.). Source file: `backend/config/portal-link-meta.json`: `categoryOrder`, `categories` with `label` + `keywords` (matched against each link **name** from the portal). Optional `descriptions` (keyed by exact portal `Name`) is for future use; **link titles and URLs are never defined here** — they always come from `GET /api/assistant/quick-links`.
+
+### GET `/api/assistant/quick-links`
+
+Returns **company portal shortcuts** from the same source as the employee portal [ChatBothLink](https://emp-portal.ghorahicement.com/Hrms/SalesForce/Dashboard?DashboardName=ChatBothLink) dashboard (`/HRMS/SalesForce/returnData?ABC=109` by default: `Name` + `Web_Excel_Address`).
+
+**Response (200):**
+
+```json
+{
+  "links": [
+    { "name": "Sales Summary", "url": "https://example.com/..." }
+  ],
+  "error": null
+}
+```
+
+If the portal is unreachable, `links` may be empty and `error` may contain a short message.
+
+---
+
+## Chat endpoint
 
 ```
 POST /api/assistant/chat

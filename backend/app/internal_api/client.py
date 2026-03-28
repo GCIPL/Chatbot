@@ -15,6 +15,11 @@ EMP_PORTAL_HEADERS = {
     "User-Agent": "GhorahiAssistant/1.0",
 }
 
+# Same dashboard as portal "ChatBothLink" (grid loads returnData?ABC=109).
+CHATBOT_LINKS_REFERER = (
+    "https://emp-portal.ghorahicement.com/Hrms/SalesForce/Dashboard?DashboardName=ChatBothLink"
+)
+
 
 def _parse_body(body: str | bytes) -> list[dict[str, Any]]:
     """Parse response; body may be double-encoded JSON string."""
@@ -110,3 +115,59 @@ async def fetch_sales_force_return_data(
 
     raw = _parse_body(resp.text)
     return _normalize_rows(raw)
+
+
+def _normalize_quick_link_rows(raw: list[dict[str, Any]]) -> list[dict[str, str]]:
+    """
+    ChatBothLink API (returnData?ABC=chatbot_links) returns objects like:
+    {"Name": "...", "Web_Excel_Address": "https://..."} — not metric rows.
+    """
+    out: list[dict[str, str]] = []
+    for row in raw:
+        if not isinstance(row, dict):
+            continue
+        name = ""
+        url = ""
+        for k, v in row.items():
+            if v is None or v == "":
+                continue
+            ks = k.strip("_").lower().replace(" ", "")
+            vs = v.strip() if isinstance(v, str) else str(v).strip()
+            if not vs:
+                continue
+            if ks == "name":
+                name = vs
+            elif ks in ("webexceladdress", "web_excel_address"):
+                url = vs
+        if name and url.startswith(("http://", "https://")):
+            out.append({"name": name, "url": url})
+    return out
+
+
+async def fetch_chatbot_quick_links(
+    session_cookie: str | None = None,
+    timeout_seconds: float = 10.0,
+) -> list[dict[str, str]]:
+    """
+    GET /HRMS/SalesForce/returnData?ABC=sales_force_abc_chatbot_links
+    Referer must match ChatBothLink dashboard (same as portal grid).
+    """
+    url = f"{settings.emp_portal_base_url.rstrip('/')}/HRMS/SalesForce/returnData"
+    params = {"ABC": settings.sales_force_abc_chatbot_links}
+    headers = dict(EMP_PORTAL_HEADERS)
+    headers["Referer"] = CHATBOT_LINKS_REFERER
+    if session_cookie:
+        headers["Cookie"] = session_cookie
+
+    async with httpx.AsyncClient(timeout=timeout_seconds) as client:
+        resp = await client.get(url, params=params, headers=headers)
+
+    if resp.status_code != 200:
+        raise httpx.HTTPStatusError(
+            f"Emp portal returned {resp.status_code}",
+            request=resp.request,
+            response=resp,
+        )
+
+    raw = _parse_body(resp.text)
+    return _normalize_quick_link_rows(raw)

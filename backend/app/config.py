@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     # Emp portal
     emp_portal_base_url: str = "https://emp-portal.ghorahicement.com"
     sales_force_abc: str = "105"
+    # ChatBothLink dashboard grid: returnData?ABC=109 → Name + Web_Excel_Address
+    sales_force_abc_chatbot_links: str = "109"
 
     # App
     assistant_env: str = "development"

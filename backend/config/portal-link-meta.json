@@ -1,0 +1,26 @@
+{
+  "categoryOrder": ["sales", "dashboards", "management", "operations", "other"],
+  "categories": {
+    "sales": {
+      "label": "Sales",
+      "keywords": ["sales", "customer", "dispatch", "order", "person"]
+    },
+    "dashboards": {
+      "label": "Reports & dashboards",
+      "keywords": ["dashboard", "summary", "detail"]
+    },
+    "management": {
+      "label": "Management",
+      "keywords": ["mgmt", "management"]
+    },
+    "operations": {
+      "label": "Plant & operations",
+      "keywords": ["plant", "production", "kiln", "mill", "stock"]
+    },
+    "other": {
+      "label": "More",
+      "keywords": []
+    }
+  },
+  "descriptions": {}
+}
